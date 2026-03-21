@@ -1,92 +1,82 @@
-<!-- BOOTSTRAP: If this file still contains [BRACKETED PLACEHOLDERS], the project
-     has not been bootstrapped. Read BOOTSTRAP.md and follow its instructions to
-     walk the user through the interactive bootstrap process before doing anything
-     else. Do NOT run the normal session protocol (bd ready, etc.) until bootstrap
-     is complete. -->
+# CLAUDE.md — Campfire Marketplace
 
-# CLAUDE.md — [PROJECT NAME] Project Instructions
-
-> OS-level instructions (session protocol, beads workflow, model routing, blog pipeline, rules) are inherited from `~/.claude/CLAUDE.md`. This file contains only project-specific configuration.
+> OS-level instructions (session protocol, model routing, blog pipeline, rules) are inherited from `~/.claude/CLAUDE.md`. This file contains only project-specific configuration.
 
 ## Project
 
-**[PROJECT NAME]**: [One-line description of what this project is.]
+**Campfire Marketplace**: Azure Marketplace managed application for campfire. Customers deploy cf-mcp into their own Azure subscription via one-click. The operator (3DL) manages updates remotely.
+
+## Work Tracking — rd (not bd)
+
+**This project uses `rd` for all work tracking.** The `bd` CLI is NOT used in this project.
+
+```bash
+rd list                    # All items
+rd list --status active    # Active items
+rd ready                   # Ready queue
+rd show <id>               # Item details
+rd create "Title" --type task  # New item
+rd update <id> --status active # Change status
+rd close <id> --reason "..."   # Close with reason
+```
 
 ## Agent Roster
 
-The PM agent coordinates work across specialized agents. Each has a spec in `docs/`.
-
-| Agent | Spec | Container | Role |
-|-------|------|-----------|------|
-| PM | CLAUDE.md | (beads via OS) | Prioritize, track, route work |
-| [Agent Name] | docs/agent-[name].md | [service name] | [Role description] |
+| Agent | Spec | Role |
+|-------|------|------|
+| PM | CLAUDE.md | Prioritize, track, route work |
+| implementer | .claude/agents/implementer.md | Build one work unit |
+| reviewer | .claude/agents/reviewer.md | Review for correctness + integration |
+| designer | .claude/agents/designer.md | Architecture + pricing decisions |
 
 **Routing rules:**
-- [Task type] → [Agent Name]
-- Everything else (prioritization, decisions, coordination) → PM
+- Bicep templates → implementer (sonnet)
+- Marketplace listing/content → implementer (sonnet)
+- Pricing model → designer (opus)
+- Certification process → implementer (sonnet)
 
 ## Task-Type → Model Mapping
 
 | Task Type | Model | Rationale |
 |-----------|-------|-----------|
-| [Novel design / architecture] | **Opus** | [Why this needs the strongest model] |
-| [Structured analysis / specs] | **Sonnet** | [Why mid-tier is sufficient] |
-| [Mechanical updates / templates] | **Haiku** | [Why cheap model works] |
+| Pricing model, marketplace strategy | **Opus** | Strategic decisions |
+| Bicep templates, UI definitions | **Sonnet** | Structured implementation |
+| Listing text, icon updates | **Haiku** | Content updates |
 
-## Design Change Cascade
-
-**Every design/architecture change MUST trigger these downstream beads:**
-
-A "design change" is any bead that modifies:
-- [Define what counts as a design change in this project]
+## Architecture
 
 ```
-Design Change (parent)
-├── 1. [Review Type] (P1, blocked by parent)
-│      Route to: [Agent]
-│      Assess: [What to check]
-│      Output: [What it produces]
-│
-├── 2. [Review Type] (P2, blocked by #1)
-│      Route to: [Agent]
-│      ...
-│
-└── N. [Final Check] (P3, blocked by #N-1)
-       Route to: [Agent]
-       ...
+managed-app/
+  mainTemplate.bicep       Main deployment template (App Service B1 + Storage + App Insights)
+  createUiDefinition.json  Marketplace UI definition (customer-facing parameters)
+  viewDefinition.json      Managed app dashboard views
+marketplace/
+  listing.md               Marketplace listing content
+  pricing.json             Tier definitions (Community/Team/Enterprise)
+  icons/                   Marketplace listing assets
+docs/
+  publishing-guide.md      Azure Partner Center certification process
+  operator-runbook.md      Remote management procedures
+.github/workflows/
+  validate.yml             Bicep linting + ARM-TTK validation
+  package.yml              Package managed app ZIP for Partner Center
 ```
 
-## Cross-Project Coordination
+## Source of Truth
 
-This project is part of the 3DL portfolio. Cross-project conventions (staff signals, cross-references, project registry) are inherited from `~/.claude/CLAUDE.md`. See `docs/cross-project-protocol.md` in the OS repo for full protocol.
+1. Design doc: campfire repo `docs/design-hosted-deployment.md`
+2. Managed app template: `managed-app/mainTemplate.bicep`
+3. Marketplace listing: `marketplace/`
 
-## Source of Truth Hierarchy
+## Conventions
 
-When artifacts disagree, resolve conflicts in this order:
+- Bicep for all templates (no ARM JSON, no Terraform)
+- ARM-TTK validation must pass before commit
+- Marketplace listing follows Azure Marketplace content guidelines
+- All managed app resources tagged with `managedBy: campfire`
 
-1. **[Highest authority]** — [Why this wins]
-2. **[Second authority]** — [Its relationship to #1]
-3. **[Third authority]** — [Its relationship to #2]
-4. **[Derived artifact]** — this synthesizes everything; it follows, never leads
+## Don't
 
-## Artifact Conventions
-
-- **[Artifact type]**: [Format and location]
-- **Specs and plans**: Structured markdown in `docs/`.
-- **Code**: In appropriate source directories, tracked by beads when relevant.
-
-All artifacts in `docs/` should be linked from a corresponding bead so nothing gets lost.
-
-## Repo Structure
-
-```
-[project-name]/
-├── CLAUDE.md            # This file — project instructions
-├── docker-compose.yml   # Project-specific container services
-├── bin/                 # Project-specific tool wrappers
-├── docs/                # Specs, plans, diagrams, agent specs
-│   ├── agent-*.md       # Agent specifications
-│   ├── guides/          # Step-by-step guides
-│   └── blog/            # Blog pipeline
-└── site/                # Website (if applicable)
-```
+- Don't include application source code — the managed app pulls from GHCR
+- Don't hardcode SKUs — parameterize everything in createUiDefinition
+- Don't bypass Partner Center validation — run ARM-TTK locally first
