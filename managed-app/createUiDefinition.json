@@ -1,0 +1,115 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "namePrefix",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Resource name prefix",
+        "defaultValue": "cf",
+        "toolTip": "Short prefix for all resource names (2-8 lowercase alphanumeric characters). Use something unique per deployment.",
+        "constraints": {
+          "required": true,
+          "regex": "^[a-z0-9]{2,8}$",
+          "validationMessage": "Prefix must be 2-8 lowercase alphanumeric characters."
+        },
+        "visible": true
+      }
+    ],
+    "steps": [
+      {
+        "name": "campfireConfig",
+        "label": "Campfire Configuration",
+        "elements": [
+          {
+            "name": "cfSessionTokenInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Your Campfire session token authenticates cf-mcp with the Campfire protocol network. Obtain one by running `cf register` with your operator identity."
+            }
+          },
+          {
+            "name": "cfSessionToken",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": {
+              "password": "Campfire session token",
+              "confirmPassword": "Confirm session token"
+            },
+            "toolTip": "The CF_SESSION_TOKEN for your cf-mcp instance. This is stored as an encrypted app setting in Azure Functions.",
+            "constraints": {
+              "required": true
+            },
+            "options": {
+              "hideConfirmation": false
+            },
+            "visible": true
+          },
+          {
+            "name": "cfDomain",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Public hostname (optional)",
+            "defaultValue": "",
+            "toolTip": "Custom hostname for your cf-mcp endpoint (e.g. campfire.example.com). Leave blank to use the Azure-assigned hostname.",
+            "constraints": {
+              "required": false,
+              "regex": "^$|^[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)*$",
+              "validationMessage": "Must be a valid hostname or left blank."
+            },
+            "visible": true
+          }
+        ]
+      },
+      {
+        "name": "infrastructure",
+        "label": "Infrastructure",
+        "elements": [
+          {
+            "name": "storageSku",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Storage redundancy",
+            "defaultValue": "Locally redundant (LRS)",
+            "toolTip": "Storage account replication. LRS is lowest cost; ZRS provides zone redundancy; GRS replicates to a paired region.",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                {
+                  "label": "Locally redundant (LRS)",
+                  "value": "Standard_LRS"
+                },
+                {
+                  "label": "Zone redundant (ZRS)",
+                  "value": "Standard_ZRS"
+                },
+                {
+                  "label": "Geo redundant (GRS)",
+                  "value": "Standard_GRS"
+                }
+              ]
+            },
+            "visible": true
+          },
+          {
+            "name": "enableMonitoring",
+            "type": "Microsoft.Common.CheckBox",
+            "label": "Enable monitoring (Application Insights + Log Analytics)",
+            "toolTip": "Deploys Application Insights and a Log Analytics workspace for function telemetry and diagnostics. Adds ~$2-5/month at low volumes.",
+            "defaultValue": true,
+            "visible": true
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "namePrefix": "[basics('namePrefix')]",
+      "cfSessionToken": "[steps('campfireConfig').cfSessionToken]",
+      "cfDomain": "[steps('campfireConfig').cfDomain]",
+      "storageSku": "[steps('infrastructure').storageSku]",
+      "enableMonitoring": "[steps('infrastructure').enableMonitoring]"
+    }
+  }
+}

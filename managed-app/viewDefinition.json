@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/viewdefinition/0.0.1-preview/ViewDefinition.json#",
+  "contentVersion": "0.0.0.1",
+  "views": [
+    {
+      "kind": "Overview",
+      "properties": {
+        "header": "Campfire MCP Gateway",
+        "description": "Your campfire cf-mcp instance — a Model Context Protocol (MCP) gateway for agent-to-agent communication over the Campfire protocol.",
+        "commands": [
+          {
+            "displayName": "Open cf-mcp endpoint",
+            "path": "[concat('https://', outputs('functionAppHostname'))]"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Metrics",
+      "properties": {
+        "displayName": "Function App metrics",
+        "version": "1.0.0",
+        "chartType": "Bar",
+        "metrics": [
+          {
+            "name": "FunctionExecutionCount",
+            "aggregationType": "Sum",
+            "resourceTagFilter": [
+              {
+                "operator": "Contains",
+                "name": "managedBy",
+                "value": "campfire"
+              }
+            ],
+            "resourceType": "Microsoft.Web/sites",
+            "displayName": "Function executions"
+          },
+          {
+            "name": "FunctionExecutionUnits",
+            "aggregationType": "Sum",
+            "resourceTagFilter": [
+              {
+                "operator": "Contains",
+                "name": "managedBy",
+                "value": "campfire"
+              }
+            ],
+            "resourceType": "Microsoft.Web/sites",
+            "displayName": "Execution units (MB-ms)"
+          }
+        ]
+      }
+    },
+    {
+      "kind": "Associations",
+      "properties": {
+        "displayName": "Resources",
+        "version": "1.0.0"
+      }
+    }
+  ]
+}
