@@ -16,7 +16,7 @@ rd list --status active    # Active items
 rd ready                   # Ready queue
 rd show <id>               # Item details
 rd create "Title" --type task  # New item
-rd update <id> --status active # Change status
+rd claim <id>                  # Claim and start work
 rd close <id> --reason "..."   # Close with reason
 ```
 
